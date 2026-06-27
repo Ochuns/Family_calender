@@ -6,7 +6,10 @@ import { doc, setDoc } from 'firebase/firestore'
 import { db, messagingPromise } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 
+// Trim whitespace and stray quotes that may be added by some .env editors
 const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+  ?.trim()
+  .replace(/^["']|["']$/g, '')
 
 export function useFCMToken() {
   const { user } = useAuth()

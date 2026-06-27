@@ -131,7 +131,7 @@ export default function CalendarView({ events, isAdmin, onDateSelect, onEventCli
           center: 'title',
           right: 'next today',
         }}
-        height="auto"
+        height={currentView === 'dayGridMonth' ? 'auto' : 'calc(100vh - 220px)'}
         events={fcEvents}
         selectable={isAdmin}
         select={handleDateSelect}
