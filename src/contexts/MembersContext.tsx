@@ -20,7 +20,7 @@ interface MembersContextType {
   memberLabels: Record<string, string>
   loading: boolean
   initialized: boolean
-  updateMember: (id: FamilyMember, updates: { label?: string; color?: string }) => Promise<void>
+  updateMember: (id: FamilyMember, updates: { label?: string; color?: string; visible?: boolean }) => Promise<void>
   initializeMembers: () => Promise<void>
 }
 
@@ -67,7 +67,7 @@ export function MembersProvider({ children }: { children: ReactNode }) {
     members.map((m) => [m.id, m.label])
   )
 
-  const updateMember = async (id: FamilyMember, updates: { label?: string; color?: string }) => {
+  const updateMember = async (id: FamilyMember, updates: { label?: string; color?: string; visible?: boolean }) => {
     await setDoc(doc(db, 'members', id), updates, { merge: true })
   }
 

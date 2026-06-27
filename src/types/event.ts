@@ -5,6 +5,7 @@ export interface MemberInfo {
   label: string
   color: string
   order: number
+  visible?: boolean  // undefined or true = shown in legend; false = hidden by default
 }
 
 export interface CalendarEvent {

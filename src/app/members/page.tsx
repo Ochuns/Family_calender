@@ -7,6 +7,22 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useMembers } from '@/contexts/MembersContext'
 import type { FamilyMember } from '@/types/event'
 
+function EyeIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    )
+  }
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" />
+    </svg>
+  )
+}
+
 export default function MembersPage() {
   const { role, loading: authLoading } = useAuth()
   const { members, loading, updateMember, initializeMembers } = useMembers()
@@ -14,6 +30,7 @@ export default function MembersPage() {
 
   const [edits, setEdits] = useState<Record<string, { label: string; color: string }>>({})
   const [saving, setSaving] = useState(false)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
   const [initializing, setInitializing] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -25,11 +42,16 @@ export default function MembersPage() {
   }, [role, authLoading, router])
 
   useEffect(() => {
-    const initial: Record<string, { label: string; color: string }> = {}
-    members.forEach((m) => {
-      initial[m.id] = { label: m.label, color: m.color }
+    // Only initialize entries that don't exist yet — never overwrite pending edits
+    setEdits((prev) => {
+      const next = { ...prev }
+      members.forEach((m) => {
+        if (!next[m.id]) {
+          next[m.id] = { label: m.label, color: m.color }
+        }
+      })
+      return next
     })
-    setEdits(initial)
   }, [members])
 
   const hasChanges = members.some((m) => {
@@ -51,7 +73,6 @@ export default function MembersPage() {
       await Promise.all(
         changedMembers.map((m) => updateMember(m.id as FamilyMember, edits[m.id]))
       )
-      console.log('✓ メンバーを保存しました', changedMembers.map((m) => edits[m.id]))
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (error) {
@@ -62,12 +83,22 @@ export default function MembersPage() {
     }
   }
 
+  const handleToggleVisible = async (id: FamilyMember, currentVisible: boolean) => {
+    setTogglingId(id)
+    try {
+      await updateMember(id, { visible: !currentVisible })
+    } catch (error) {
+      console.error('表示切替エラー:', error)
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
   const handleInitialize = async () => {
     setInitializing(true)
     setSaveError(null)
     try {
       await initializeMembers()
-      console.log('✓ メンバーを初期化しました')
     } catch (error) {
       console.error('初期化エラー:', error)
       setSaveError('初期化に失敗しました。Firestoreのセキュリティルールを確認してください。')
@@ -98,19 +129,22 @@ export default function MembersPage() {
       <main className="flex-1 px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-3">
           <p className="text-sm text-gray-500">
-            メンバーの表示名とカラーを変更できます。色の丸をタップするとカラーピッカーが開きます。
+            表示名・カラーを変更できます。目のアイコンでカレンダーへの表示/非表示を切り替えられます。
           </p>
 
           {members.map((m) => {
             const edit = edits[m.id] ?? { label: m.label, color: m.color }
             const changed = edit.label !== m.label || edit.color !== m.color
+            const isVisible = m.visible !== false
+            const isToggling = togglingId === m.id
             return (
               <div
                 key={m.id}
                 className={`flex items-center gap-3 rounded-xl bg-white p-4 shadow-sm transition ${
                   changed ? 'ring-2 ring-blue-300' : ''
-                }`}
+                } ${!isVisible ? 'opacity-60' : ''}`}
               >
+                {/* Color picker */}
                 <div className="relative shrink-0">
                   <div
                     className="h-10 w-10 rounded-full border-2 border-gray-200"
@@ -129,6 +163,8 @@ export default function MembersPage() {
                     title="色を変更"
                   />
                 </div>
+
+                {/* Label input */}
                 <input
                   type="text"
                   value={edit.label}
@@ -140,6 +176,20 @@ export default function MembersPage() {
                   }
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-blue-500 focus:outline-none"
                 />
+
+                {/* Visibility toggle */}
+                <button
+                  onClick={() => handleToggleVisible(m.id as FamilyMember, isVisible)}
+                  disabled={isToggling}
+                  title={isVisible ? 'カレンダーから非表示にする' : 'カレンダーに表示する'}
+                  className={`shrink-0 rounded-lg p-2 transition ${
+                    isVisible
+                      ? 'text-blue-500 hover:bg-blue-50'
+                      : 'text-gray-300 hover:bg-gray-100'
+                  } disabled:opacity-40`}
+                >
+                  <EyeIcon open={isVisible} />
+                </button>
               </div>
             )
           })}

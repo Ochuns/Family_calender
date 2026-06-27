@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEvents } from '@/hooks/useEvents'
 import CalendarView from '@/components/CalendarView'
@@ -20,6 +20,26 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>()
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
+  const [hiddenMembers, setHiddenMembers] = useState<Set<string>>(new Set())
+  const initializedRef = useRef(false)
+
+  // Sync initial hidden state from Firestore visible field (only once on first data load)
+  useEffect(() => {
+    if (initializedRef.current || members.length === 0) return
+    initializedRef.current = true
+    setHiddenMembers(new Set(members.filter((m) => m.visible === false).map((m) => m.id)))
+  }, [members])
+
+  const toggleMember = (id: string) => {
+    setHiddenMembers((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const visibleEvents = events.filter((e) => !hiddenMembers.has(e.member))
 
   const handleAddEvent = async (input: NewEventInput, notify: boolean) => {
     await addEvent(input)
@@ -73,23 +93,34 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Legend */}
+      {/* Legend — tap to toggle member visibility */}
       <div className="border-b bg-white px-4 py-2">
-        <div className="mx-auto flex max-w-2xl flex-wrap gap-3">
-          {members.map((m) => (
-            <div key={m.id} className="flex items-center gap-1.5">
-              <span
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: memberColors[m.id] }}
-              />
-              <span className="text-xs text-gray-600">{m.label}</span>
-            </div>
-          ))}
+        <div className="mx-auto flex max-w-2xl flex-wrap gap-2">
+          {members.filter((m) => m.visible !== false).map((m) => {
+            const isHidden = hiddenMembers.has(m.id)
+            return (
+              <button
+                key={m.id}
+                onClick={() => toggleMember(m.id)}
+                className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition ${
+                  isHidden
+                    ? 'border-gray-200 bg-gray-50 text-gray-300'
+                    : 'border-transparent bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full transition"
+                  style={{ backgroundColor: isHidden ? '#d1d5db' : memberColors[m.id] }}
+                />
+                <span className={isHidden ? 'line-through' : ''}>{m.label}</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Calendar */}
-      <main className="flex-1 px-2 py-4">
+      <main className="flex-1 px-2 py-4 pb-24">
         <div className="mx-auto max-w-2xl">
           {loading ? (
             <div className="flex items-center justify-center py-20 text-gray-400">
@@ -97,7 +128,7 @@ export default function Home() {
             </div>
           ) : (
             <CalendarView
-              events={events}
+              events={visibleEvents}
               isAdmin={isAdmin}
               onDateSelect={handleDateSelect}
               onEventClick={handleEventClick}
@@ -106,20 +137,22 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Admin: Add button */}
+      {/* Footer: Add button (admin only) */}
       {isAdmin && (
-        <div className="sticky bottom-6 flex justify-center px-4">
-          <button
-            onClick={() => {
-              setSelectedDate(undefined)
-              setShowAddModal(true)
-            }}
-            className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-600 active:scale-95"
-          >
-            <span className="text-lg leading-none">+</span>
-            予定を追加
-          </button>
-        </div>
+        <footer className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-200 bg-white px-4 py-3">
+          <div className="mx-auto max-w-2xl">
+            <button
+              onClick={() => {
+                setSelectedDate(undefined)
+                setShowAddModal(true)
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 active:scale-95 transition"
+            >
+              <span className="text-lg leading-none">+</span>
+              予定を追加
+            </button>
+          </div>
+        </footer>
       )}
 
       {/* Modals */}
