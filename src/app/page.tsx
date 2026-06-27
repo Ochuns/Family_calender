@@ -96,7 +96,7 @@ export default function Home() {
       {/* Legend — tap to toggle member visibility */}
       <div className="border-b bg-white px-4 py-2">
         <div className="mx-auto flex max-w-2xl flex-wrap gap-2">
-          {members.map((m) => {
+          {members.filter((m) => m.visible !== false).map((m) => {
             const isHidden = hiddenMembers.has(m.id)
             return (
               <button
