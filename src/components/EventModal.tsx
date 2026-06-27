@@ -3,11 +3,14 @@
 import { useState, useCallback } from 'react'
 import type { NewEventInput } from '@/hooks/useEvents'
 import { MEMBER_LABELS, MEMBER_COLORS, type FamilyMember } from '@/types/event'
+import type { CalendarEvent } from '@/types/event'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
 
 interface Props {
   initialDate?: string
+  initialValues?: CalendarEvent
   onSave: (event: NewEventInput) => Promise<void>
+  onUpdate?: (id: string, input: NewEventInput) => Promise<void>
   onClose: () => void
 }
 
@@ -50,13 +53,15 @@ function MicButton({
   )
 }
 
-export default function EventModal({ initialDate, onSave, onClose }: Props) {
-  const [title, setTitle] = useState('')
-  const [start, setStart] = useState(initialDate ?? '')
-  const [end, setEnd] = useState('')
-  const [allDay, setAllDay] = useState(true)
-  const [member, setMember] = useState<FamilyMember>('family')
-  const [description, setDescription] = useState('')
+export default function EventModal({ initialDate, initialValues, onSave, onUpdate, onClose }: Props) {
+  const isEditMode = !!initialValues
+
+  const [title, setTitle] = useState(initialValues?.title ?? '')
+  const [start, setStart] = useState(initialValues?.start ?? initialDate ?? '')
+  const [end, setEnd] = useState(initialValues?.end ?? '')
+  const [allDay, setAllDay] = useState(initialValues?.allDay ?? true)
+  const [member, setMember] = useState<FamilyMember>(initialValues?.member ?? 'family')
+  const [description, setDescription] = useState(initialValues?.description ?? '')
   const [saving, setSaving] = useState(false)
 
   const handleTitleVoice = useCallback((text: string) => {
@@ -72,14 +77,19 @@ export default function EventModal({ initialDate, onSave, onClose }: Props) {
     if (!title.trim() || !start) return
     setSaving(true)
     try {
-      await onSave({
+      const input: NewEventInput = {
         title: title.trim(),
         start,
         end: end || undefined,
         allDay,
         member,
         description: description.trim() || undefined,
-      })
+      }
+      if (isEditMode && onUpdate) {
+        await onUpdate(initialValues.id, input)
+      } else {
+        await onSave(input)
+      }
       onClose()
     } finally {
       setSaving(false)
@@ -89,7 +99,9 @@ export default function EventModal({ initialDate, onSave, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
       <div className="w-full max-w-md rounded-t-2xl bg-white p-6 sm:rounded-2xl">
-        <h2 className="mb-4 text-lg font-bold text-gray-800">予定を追加</h2>
+        <h2 className="mb-4 text-lg font-bold text-gray-800">
+          {isEditMode ? '予定を編集' : '予定を追加'}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">タイトル</label>
@@ -187,7 +199,7 @@ export default function EventModal({ initialDate, onSave, onClose }: Props) {
               disabled={saving}
               className="flex-1 rounded-lg bg-blue-500 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
             >
-              {saving ? '保存中...' : '保存'}
+              {saving ? '保存中...' : isEditMode ? '更新' : '保存'}
             </button>
           </div>
         </form>

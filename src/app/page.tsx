@@ -11,12 +11,13 @@ import type { CalendarEvent } from '@/types/event'
 
 export default function Home() {
   const { user, role, logout } = useAuth()
-  const { events, loading, addEvent, deleteEvent } = useEvents()
+  const { events, loading, addEvent, updateEvent, deleteEvent } = useEvents()
   const isAdmin = role === 'admin'
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | undefined>()
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date)
@@ -109,7 +110,16 @@ export default function Home() {
           event={selectedEvent}
           isAdmin={isAdmin}
           onDelete={deleteEvent}
+          onEdit={(event) => { setEditingEvent(event); setSelectedEvent(null) }}
           onClose={() => setSelectedEvent(null)}
+        />
+      )}
+      {editingEvent && (
+        <EventModal
+          initialValues={editingEvent}
+          onSave={addEvent}
+          onUpdate={updateEvent}
+          onClose={() => setEditingEvent(null)}
         />
       )}
     </div>

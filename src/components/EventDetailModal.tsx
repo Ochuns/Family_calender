@@ -7,10 +7,11 @@ interface Props {
   event: CalendarEvent
   isAdmin: boolean
   onDelete: (id: string) => Promise<void>
+  onEdit: (event: CalendarEvent) => void
   onClose: () => void
 }
 
-export default function EventDetailModal({ event, isAdmin, onDelete, onClose }: Props) {
+export default function EventDetailModal({ event, isAdmin, onDelete, onEdit, onClose }: Props) {
   const handleDelete = async () => {
     await onDelete(event.id)
     onClose()
@@ -51,12 +52,20 @@ export default function EventDetailModal({ event, isAdmin, onDelete, onClose }: 
 
         <div className="mt-6 flex gap-2">
           {isAdmin && (
-            <button
-              onClick={handleDelete}
-              className="flex-1 rounded-lg bg-red-50 py-3 text-sm font-medium text-red-600 hover:bg-red-100"
-            >
-              削除
-            </button>
+            <>
+              <button
+                onClick={() => { onEdit(event); onClose() }}
+                className="flex-1 rounded-lg bg-blue-50 py-3 text-sm font-medium text-blue-600 hover:bg-blue-100"
+              >
+                編集
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 rounded-lg bg-red-50 py-3 text-sm font-medium text-red-600 hover:bg-red-100"
+              >
+                削除
+              </button>
+            </>
           )}
           <button
             onClick={onClose}

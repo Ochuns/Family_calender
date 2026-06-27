@@ -1,11 +1,20 @@
 'use client'
 
+import { useRef, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import type { EventClickArg, DateSelectArg, EventContentArg } from '@fullcalendar/core'
 import { MEMBER_COLORS } from '@/types/event'
 import type { CalendarEvent } from '@/types/event'
+
+type ViewType = 'dayGridMonth' | 'dayGridWeek' | 'dayGridDay'
+
+const VIEW_LABELS: { key: ViewType; label: string }[] = [
+  { key: 'dayGridMonth', label: '月' },
+  { key: 'dayGridWeek', label: '週' },
+  { key: 'dayGridDay', label: '日' },
+]
 
 interface Props {
   events: CalendarEvent[]
@@ -23,6 +32,9 @@ function renderEventContent(info: EventContentArg) {
 }
 
 export default function CalendarView({ events, isAdmin, onDateSelect, onEventClick }: Props) {
+  const calendarRef = useRef<FullCalendar>(null)
+  const [currentView, setCurrentView] = useState<ViewType>('dayGridMonth')
+
   const fcEvents = events.map((e) => ({
     id: e.id,
     title: e.title,
@@ -45,16 +57,39 @@ export default function CalendarView({ events, isAdmin, onDateSelect, onEventCli
     onEventClick(original)
   }
 
+  const changeView = (view: ViewType) => {
+    calendarRef.current?.getApi().changeView(view)
+    setCurrentView(view)
+  }
+
   return (
     <div className="fc-family">
+      {/* View switcher */}
+      <div className="mb-3 flex justify-end gap-1">
+        {VIEW_LABELS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => changeView(key)}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              currentView === key
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         locale="ja"
         headerToolbar={{
           left: 'prev',
           center: 'title',
-          right: 'next',
+          right: 'next today',
         }}
         height="auto"
         events={fcEvents}
