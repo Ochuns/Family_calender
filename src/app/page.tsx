@@ -1,7 +1,152 @@
+'use client'
+
+import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useEvents } from '@/hooks/useEvents'
+import CalendarView from '@/components/CalendarView'
+import EventModal from '@/components/EventModal'
+import EventDetailModal from '@/components/EventDetailModal'
+import { useMembers } from '@/contexts/MembersContext'
+import type { CalendarEvent } from '@/types/event'
+import type { NewEventInput } from '@/hooks/useEvents'
+
 export default function Home() {
+  const { user, role, logout } = useAuth()
+  const { events, loading, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { members, memberColors, memberLabels } = useMembers()
+  const isAdmin = role === 'admin'
+
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<string | undefined>()
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
+
+  const handleAddEvent = async (input: NewEventInput, notify: boolean) => {
+    await addEvent(input)
+    if (notify) {
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventTitle: input.title,
+            memberLabel: memberLabels[input.member] ?? input.member,
+          }),
+        })
+      } catch (e) {
+        console.error('Notification send failed:', e)
+      }
+    }
+  }
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date)
+    setShowAddModal(true)
+  }
+
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event)
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-2xl font-bold">家族カレンダー 🗓</h1>
-    </main>
-  );
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
+          <h1 className="text-lg font-bold text-gray-800">家族カレンダー</h1>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <a
+                href="/members"
+                className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
+              >
+                メンバー管理
+              </a>
+            )}
+            <button
+              onClick={logout}
+              className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
+            >
+              ログアウト
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Legend */}
+      <div className="border-b bg-white px-4 py-2">
+        <div className="mx-auto flex max-w-2xl flex-wrap gap-3">
+          {members.map((m) => (
+            <div key={m.id} className="flex items-center gap-1.5">
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: memberColors[m.id] }}
+              />
+              <span className="text-xs text-gray-600">{m.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Calendar */}
+      <main className="flex-1 px-2 py-4">
+        <div className="mx-auto max-w-2xl">
+          {loading ? (
+            <div className="flex items-center justify-center py-20 text-gray-400">
+              読み込み中...
+            </div>
+          ) : (
+            <CalendarView
+              events={events}
+              isAdmin={isAdmin}
+              onDateSelect={handleDateSelect}
+              onEventClick={handleEventClick}
+            />
+          )}
+        </div>
+      </main>
+
+      {/* Admin: Add button */}
+      {isAdmin && (
+        <div className="sticky bottom-6 flex justify-center px-4">
+          <button
+            onClick={() => {
+              setSelectedDate(undefined)
+              setShowAddModal(true)
+            }}
+            className="flex items-center gap-2 rounded-full bg-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-blue-600 active:scale-95"
+          >
+            <span className="text-lg leading-none">+</span>
+            予定を追加
+          </button>
+        </div>
+      )}
+
+      {/* Modals */}
+      {showAddModal && (
+        <EventModal
+          initialDate={selectedDate}
+          onSave={handleAddEvent}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+      {selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          isAdmin={isAdmin}
+          onDelete={deleteEvent}
+          onEdit={(event) => { setEditingEvent(event); setSelectedEvent(null) }}
+          onClose={() => setSelectedEvent(null)}
+        />
+      )}
+      {editingEvent && (
+        <EventModal
+          initialValues={editingEvent}
+          onSave={addEvent}
+          onUpdate={updateEvent}
+          onClose={() => setEditingEvent(null)}
+        />
+      )}
+    </div>
+  )
 }

@@ -1,19 +1,29 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next'
+import './globals.css'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { MembersProvider } from '@/contexts/MembersContext'
+import FCMInitializer from '@/components/FCMInitializer'
 
 export const metadata: Metadata = {
-  title: "家族カレンダー",
-  description: "家族専用カレンダーアプリ",
-};
+  title: '家族カレンダー',
+  description: '家族専用カレンダーアプリ',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          <MembersProvider>
+            <FCMInitializer />
+            {children}
+          </MembersProvider>
+        </AuthProvider>
+      </body>
     </html>
-  );
+  )
 }
