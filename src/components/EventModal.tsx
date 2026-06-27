@@ -90,13 +90,13 @@ export default function EventModal({ initialDate, onSave, onClose }: Props) {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">誰の予定？</label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {(Object.entries(MEMBER_LABELS) as [FamilyMember, string][]).map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setMember(key)}
-                  className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
+                  className={`rounded-lg py-2 text-sm font-medium transition ${
                     member === key
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
