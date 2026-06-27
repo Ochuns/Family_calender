@@ -5,10 +5,12 @@ import {
   collection,
   onSnapshot,
   addDoc,
+  updateDoc,
   deleteDoc,
   doc,
   query,
   orderBy,
+  deleteField,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { CalendarEvent, FamilyMember } from '@/types/event'
@@ -59,9 +61,20 @@ export function useEvents() {
     await addDoc(collection(db, 'events'), data)
   }
 
+  const updateEvent = async (id: string, input: NewEventInput) => {
+    await updateDoc(doc(db, 'events', id), {
+      title: input.title,
+      start: input.start,
+      allDay: input.allDay,
+      member: input.member,
+      end: input.end ?? deleteField(),
+      description: input.description ?? deleteField(),
+    })
+  }
+
   const deleteEvent = async (id: string) => {
     await deleteDoc(doc(db, 'events', id))
   }
 
-  return { events, loading, addEvent, deleteEvent }
+  return { events, loading, addEvent, updateEvent, deleteEvent }
 }
