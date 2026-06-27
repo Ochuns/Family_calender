@@ -9,7 +9,7 @@ import { useMembers } from '@/contexts/MembersContext'
 interface Props {
   initialDate?: string
   initialValues?: CalendarEvent
-  onSave: (event: NewEventInput) => Promise<void>
+  onSave: (event: NewEventInput, notify: boolean) => Promise<void>
   onUpdate?: (id: string, input: NewEventInput) => Promise<void>
   onClose: () => void
 }
@@ -64,6 +64,7 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
   const [member, setMember] = useState<FamilyMember>(initialValues?.member ?? 'family')
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [saving, setSaving] = useState(false)
+  const [sendNotify, setSendNotify] = useState(true)
 
   const handleTitleVoice = useCallback((text: string) => {
     setTitle((prev) => (prev ? prev + text : text))
@@ -89,7 +90,7 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
       if (isEditMode && onUpdate) {
         await onUpdate(initialValues.id, input)
       } else {
-        await onSave(input)
+        await onSave(input, sendNotify)
       }
       onClose()
     } finally {
@@ -186,6 +187,21 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
               </div>
             </div>
           </div>
+
+          {!isEditMode && (
+            <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2">
+              <input
+                type="checkbox"
+                id="sendNotify"
+                checked={sendNotify}
+                onChange={(e) => setSendNotify(e.target.checked)}
+                className="h-4 w-4 rounded accent-blue-500"
+              />
+              <label htmlFor="sendNotify" className="text-sm text-blue-700">
+                家族に通知を送る
+              </label>
+            </div>
+          )}
 
           <div className="flex gap-2 pt-1">
             <button

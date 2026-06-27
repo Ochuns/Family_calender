@@ -46,3 +46,33 @@
   font-weight: 700;
   color: #2563eb;
 }
+
+/* TimeGrid (週/日) view styles */
+.fc-family .fc-timegrid-slot {
+  height: 2.5rem;
+}
+
+.fc-family .fc-timegrid-slot-label {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  vertical-align: middle;
+  padding-right: 4px;
+}
+
+.fc-family .fc-timegrid-event {
+  border-radius: 4px;
+}
+
+.fc-family .fc-timegrid-now-indicator-line {
+  border-color: #ef4444;
+}
+
+.fc-family .fc-timegrid-now-indicator-arrow {
+  border-top-color: #ef4444;
+  border-bottom-color: #ef4444;
+}
+
+.fc-family .fc-timegrid-axis {
+  font-size: 0.68rem;
+  color: #9ca3af;
+}

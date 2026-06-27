@@ -8,17 +8,36 @@ import EventModal from '@/components/EventModal'
 import EventDetailModal from '@/components/EventDetailModal'
 import { useMembers } from '@/contexts/MembersContext'
 import type { CalendarEvent } from '@/types/event'
+import type { NewEventInput } from '@/hooks/useEvents'
 
 export default function Home() {
   const { user, role, logout } = useAuth()
   const { events, loading, addEvent, updateEvent, deleteEvent } = useEvents()
-  const { members, memberColors } = useMembers()
+  const { members, memberColors, memberLabels } = useMembers()
   const isAdmin = role === 'admin'
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | undefined>()
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
+
+  const handleAddEvent = async (input: NewEventInput, notify: boolean) => {
+    await addEvent(input)
+    if (notify) {
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventTitle: input.title,
+            memberLabel: memberLabels[input.member] ?? input.member,
+          }),
+        })
+      } catch (e) {
+        console.error('Notification send failed:', e)
+      }
+    }
+  }
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date)
@@ -44,7 +63,6 @@ export default function Home() {
                 メンバー管理
               </a>
             )}
-            <span className="text-xs text-gray-400">{isAdmin ? '管理者' : '閲覧者'}</span>
             <button
               onClick={logout}
               className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
@@ -108,7 +126,7 @@ export default function Home() {
       {showAddModal && (
         <EventModal
           initialDate={selectedDate}
-          onSave={addEvent}
+          onSave={handleAddEvent}
           onClose={() => setShowAddModal(false)}
         />
       )}
