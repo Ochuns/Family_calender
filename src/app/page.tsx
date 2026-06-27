@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useEvents } from '@/hooks/useEvents'
 import CalendarView from '@/components/CalendarView'
@@ -21,6 +21,14 @@ export default function Home() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
   const [hiddenMembers, setHiddenMembers] = useState<Set<string>>(new Set())
+  const initializedRef = useRef(false)
+
+  // Sync initial hidden state from Firestore visible field (only once on first data load)
+  useEffect(() => {
+    if (initializedRef.current || members.length === 0) return
+    initializedRef.current = true
+    setHiddenMembers(new Set(members.filter((m) => m.visible === false).map((m) => m.id)))
+  }, [members])
 
   const toggleMember = (id: string) => {
     setHiddenMembers((prev) => {

@@ -6,10 +6,22 @@ import { doc, setDoc } from 'firebase/firestore'
 import { db, messagingPromise } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 
-// Trim whitespace and stray quotes that may be added by some .env editors
-const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
-  ?.trim()
-  .replace(/^["']|["']$/g, '')
+function sanitizeVapidKey(raw: string | undefined): string | undefined {
+  if (!raw) return undefined
+  // Remove ALL whitespace (trim() misses mid-string newlines from line-wrapped .env values)
+  // and strip surrounding quotes from some editors
+  const cleaned = raw.replace(/\s+/g, '').replace(/^["']|["']$/g, '')
+  // VAPID keys are URL-safe base64 (A-Z a-z 0-9 - _), typically 87 chars
+  if (!cleaned || !/^[A-Za-z0-9_-]{10,}$/.test(cleaned)) {
+    console.error(
+      '[FCM] VAPID key is invalid. Open Firebase Console → Project Settings → Cloud Messaging → Web Push certificates and copy the key pair again into NEXT_PUBLIC_FIREBASE_VAPID_KEY in .env.local'
+    )
+    return undefined
+  }
+  return cleaned
+}
+
+const VAPID_KEY = sanitizeVapidKey(process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY)
 
 export function useFCMToken() {
   const { user } = useAuth()
