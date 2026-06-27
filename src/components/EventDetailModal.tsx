@@ -1,6 +1,6 @@
 'use client'
 
-import { MEMBER_COLORS, MEMBER_LABELS } from '@/types/event'
+import { useMembers } from '@/contexts/MembersContext'
 import type { CalendarEvent } from '@/types/event'
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
 }
 
 export default function EventDetailModal({ event, isAdmin, onDelete, onEdit, onClose }: Props) {
+  const { memberColors, memberLabels } = useMembers()
+
   const handleDelete = async () => {
     await onDelete(event.id)
     onClose()
@@ -27,10 +29,10 @@ export default function EventDetailModal({ event, isAdmin, onDelete, onEdit, onC
       <div className="w-full max-w-md rounded-t-2xl bg-white p-6 sm:rounded-2xl">
         <div
           className="mb-1 h-2 w-12 rounded-full"
-          style={{ backgroundColor: MEMBER_COLORS[event.member] }}
+          style={{ backgroundColor: memberColors[event.member] ?? '#94a3b8' }}
         />
         <h2 className="mb-1 text-xl font-bold text-gray-800">{event.title}</h2>
-        <p className="mb-4 text-sm text-gray-500">{MEMBER_LABELS[event.member]}</p>
+        <p className="mb-4 text-sm text-gray-500">{memberLabels[event.member] ?? event.member}</p>
 
         <div className="space-y-2 text-sm text-gray-700">
           <div className="flex gap-2">

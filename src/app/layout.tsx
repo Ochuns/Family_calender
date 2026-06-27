@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { MembersProvider } from '@/contexts/MembersContext'
 
 export const metadata: Metadata = {
   title: '家族カレンダー',
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <MembersProvider>{children}</MembersProvider>
+        </AuthProvider>
       </body>
     </html>
   )

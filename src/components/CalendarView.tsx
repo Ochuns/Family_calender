@@ -5,7 +5,7 @@ import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import type { EventClickArg, DateSelectArg, EventContentArg } from '@fullcalendar/core'
-import { MEMBER_COLORS } from '@/types/event'
+import { useMembers } from '@/contexts/MembersContext'
 import type { CalendarEvent } from '@/types/event'
 
 type ViewType = 'dayGridMonth' | 'dayGridWeek' | 'dayGridDay'
@@ -34,6 +34,7 @@ function renderEventContent(info: EventContentArg) {
 export default function CalendarView({ events, isAdmin, onDateSelect, onEventClick }: Props) {
   const calendarRef = useRef<FullCalendar>(null)
   const [currentView, setCurrentView] = useState<ViewType>('dayGridMonth')
+  const { memberColors } = useMembers()
 
   const fcEvents = events.map((e) => ({
     id: e.id,
@@ -41,8 +42,8 @@ export default function CalendarView({ events, isAdmin, onDateSelect, onEventCli
     start: e.start,
     end: e.end,
     allDay: e.allDay,
-    backgroundColor: MEMBER_COLORS[e.member],
-    borderColor: MEMBER_COLORS[e.member],
+    backgroundColor: memberColors[e.member] ?? '#94a3b8',
+    borderColor: memberColors[e.member] ?? '#94a3b8',
     textColor: '#fff',
     extendedProps: { original: e },
   }))

@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from 'react'
 import type { NewEventInput } from '@/hooks/useEvents'
-import { MEMBER_LABELS, MEMBER_COLORS, type FamilyMember } from '@/types/event'
-import type { CalendarEvent } from '@/types/event'
+import type { CalendarEvent, FamilyMember } from '@/types/event'
 import { useVoiceInput } from '@/hooks/useVoiceInput'
+import { useMembers } from '@/contexts/MembersContext'
 
 interface Props {
   initialDate?: string
@@ -55,6 +55,7 @@ function MicButton({
 
 export default function EventModal({ initialDate, initialValues, onSave, onUpdate, onClose }: Props) {
   const isEditMode = !!initialValues
+  const { members, memberColors, memberLabels } = useMembers()
 
   const [title, setTitle] = useState(initialValues?.title ?? '')
   const [start, setStart] = useState(initialValues?.start ?? initialDate ?? '')
@@ -154,17 +155,17 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">誰の予定？</label>
             <div className="grid grid-cols-3 gap-2">
-              {(Object.entries(MEMBER_LABELS) as [FamilyMember, string][]).map(([key, label]) => (
+              {members.map((m) => (
                 <button
-                  key={key}
+                  key={m.id}
                   type="button"
-                  onClick={() => setMember(key)}
-                  style={member === key ? { backgroundColor: MEMBER_COLORS[key], color: '#fff' } : {}}
+                  onClick={() => setMember(m.id)}
+                  style={member === m.id ? { backgroundColor: memberColors[m.id], color: '#fff' } : {}}
                   className={`rounded-lg py-2 text-sm font-medium transition ${
-                    member === key ? '' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    member === m.id ? '' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {label}
+                  {memberLabels[m.id]}
                 </button>
               ))}
             </div>
