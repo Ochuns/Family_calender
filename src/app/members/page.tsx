@@ -42,11 +42,16 @@ export default function MembersPage() {
   }, [role, authLoading, router])
 
   useEffect(() => {
-    const initial: Record<string, { label: string; color: string }> = {}
-    members.forEach((m) => {
-      initial[m.id] = { label: m.label, color: m.color }
+    // Only initialize entries that don't exist yet — never overwrite pending edits
+    setEdits((prev) => {
+      const next = { ...prev }
+      members.forEach((m) => {
+        if (!next[m.id]) {
+          next[m.id] = { label: m.label, color: m.color }
+        }
+      })
+      return next
     })
-    setEdits(initial)
   }, [members])
 
   const hasChanges = members.some((m) => {
