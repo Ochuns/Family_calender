@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+/* FullCalendar mobile overrides */
+.fc-family .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.fc-family .fc-button {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;
+  border-radius: 0.5rem !important;
+  padding: 0.35rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  box-shadow: none !important;
+}
+
+.fc-family .fc-button:hover {
+  background-color: #dbeafe !important;
+}
+
+.fc-family .fc-daygrid-event {
+  border-radius: 4px;
+  margin-bottom: 1px;
+}
+
+.fc-family .fc-col-header-cell {
+  padding: 6px 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.fc-family .fc-daygrid-day-number {
+  font-size: 0.875rem;
+  padding: 4px 6px;
+}
+
+.fc-family .fc-day-today {
+  background-color: #eff6ff !important;
+}
+
+.fc-family .fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+  color: #2563eb;
+}
