@@ -9,13 +9,14 @@ import type { FamilyMember } from '@/types/event'
 
 export default function MembersPage() {
   const { role, loading: authLoading } = useAuth()
-  const { members, loading, initialized, updateMember, initializeMembers } = useMembers()
+  const { members, loading, updateMember, initializeMembers } = useMembers()
   const router = useRouter()
 
   const [edits, setEdits] = useState<Record<string, { label: string; color: string }>>({})
   const [saving, setSaving] = useState(false)
   const [initializing, setInitializing] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && role !== 'admin') {
@@ -37,19 +38,25 @@ export default function MembersPage() {
   })
 
   const handleSave = async () => {
+    const changedMembers = members.filter((m) => {
+      const edit = edits[m.id]
+      return edit && (edit.label !== m.label || edit.color !== m.color)
+    })
+    if (changedMembers.length === 0) return
+
     setSaving(true)
     setSaved(false)
+    setSaveError(null)
     try {
       await Promise.all(
-        members
-          .filter((m) => {
-            const edit = edits[m.id]
-            return edit && (edit.label !== m.label || edit.color !== m.color)
-          })
-          .map((m) => updateMember(m.id as FamilyMember, edits[m.id]))
+        changedMembers.map((m) => updateMember(m.id as FamilyMember, edits[m.id]))
       )
+      console.log('✓ メンバーを保存しました', changedMembers.map((m) => edits[m.id]))
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
+    } catch (error) {
+      console.error('メンバー保存エラー:', error)
+      setSaveError('保存に失敗しました。Firestoreのセキュリティルールを確認してください。')
     } finally {
       setSaving(false)
     }
@@ -57,8 +64,13 @@ export default function MembersPage() {
 
   const handleInitialize = async () => {
     setInitializing(true)
+    setSaveError(null)
     try {
       await initializeMembers()
+      console.log('✓ メンバーを初期化しました')
+    } catch (error) {
+      console.error('初期化エラー:', error)
+      setSaveError('初期化に失敗しました。Firestoreのセキュリティルールを確認してください。')
     } finally {
       setInitializing(false)
     }
@@ -71,13 +83,6 @@ export default function MembersPage() {
       </div>
     )
   }
-
-  const isFirestoreEmpty = initialized && members.every((m) =>
-    ['mama', 'papa', 'jibun', 'otouto1', 'otouto2', 'sofu', 'family'].includes(m.id) &&
-    m.label === ['母', '父', '自分', '弟１', '弟２', '祖父', '家族全員'][
-      ['mama', 'papa', 'jibun', 'otouto1', 'otouto2', 'sofu', 'family'].indexOf(m.id)
-    ]
-  )
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -93,7 +98,7 @@ export default function MembersPage() {
       <main className="flex-1 px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-3">
           <p className="text-sm text-gray-500">
-            メンバーの表示名とカラーを変更できます。
+            メンバーの表示名とカラーを変更できます。色の丸をタップするとカラーピッカーが開きます。
           </p>
 
           {members.map((m) => {
@@ -106,7 +111,7 @@ export default function MembersPage() {
                   changed ? 'ring-2 ring-blue-300' : ''
                 }`}
               >
-                <div className="relative">
+                <div className="relative shrink-0">
                   <div
                     className="h-10 w-10 rounded-full border-2 border-gray-200"
                     style={{ backgroundColor: edit.color }}
@@ -139,6 +144,12 @@ export default function MembersPage() {
             )
           })}
 
+          {saveError && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {saveError}
+            </div>
+          )}
+
           <div className="pt-2">
             <button
               onClick={handleSave}
@@ -153,7 +164,7 @@ export default function MembersPage() {
             </button>
           </div>
 
-          <div className="pt-4 border-t border-gray-200">
+          <div className="border-t border-gray-200 pt-4">
             <p className="mb-2 text-xs text-gray-400">
               Firestoreにメンバーデータを初期化します（変更した内容はリセットされます）
             </p>
