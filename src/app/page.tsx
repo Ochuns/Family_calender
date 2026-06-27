@@ -6,12 +6,13 @@ import { useEvents } from '@/hooks/useEvents'
 import CalendarView from '@/components/CalendarView'
 import EventModal from '@/components/EventModal'
 import EventDetailModal from '@/components/EventDetailModal'
-import { MEMBER_COLORS, MEMBER_LABELS } from '@/types/event'
+import { useMembers } from '@/contexts/MembersContext'
 import type { CalendarEvent } from '@/types/event'
 
 export default function Home() {
   const { user, role, logout } = useAuth()
   const { events, loading, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { members, memberColors } = useMembers()
   const isAdmin = role === 'admin'
 
   const [showAddModal, setShowAddModal] = useState(false)
@@ -34,7 +35,15 @@ export default function Home() {
       <header className="sticky top-0 z-10 bg-white px-4 py-3 shadow-sm">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <h1 className="text-lg font-bold text-gray-800">家族カレンダー</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <a
+                href="/members"
+                className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
+              >
+                メンバー管理
+              </a>
+            )}
             <span className="text-xs text-gray-400">{isAdmin ? '管理者' : '閲覧者'}</span>
             <button
               onClick={logout}
@@ -48,18 +57,16 @@ export default function Home() {
 
       {/* Legend */}
       <div className="border-b bg-white px-4 py-2">
-        <div className="mx-auto flex max-w-2xl gap-4">
-          {(Object.entries(MEMBER_LABELS) as [keyof typeof MEMBER_LABELS, string][]).map(
-            ([key, label]) => (
-              <div key={key} className="flex items-center gap-1.5">
-                <span
-                  className="h-3 w-3 rounded-full"
-                  style={{ backgroundColor: MEMBER_COLORS[key] }}
-                />
-                <span className="text-xs text-gray-600">{label}</span>
-              </div>
-            )
-          )}
+        <div className="mx-auto flex max-w-2xl flex-wrap gap-3">
+          {members.map((m) => (
+            <div key={m.id} className="flex items-center gap-1.5">
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: memberColors[m.id] }}
+              />
+              <span className="text-xs text-gray-600">{m.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
