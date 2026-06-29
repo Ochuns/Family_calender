@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { MembersProvider } from '@/contexts/MembersContext'
+import { EventsProvider } from '@/contexts/EventsContext'
 import FCMInitializer from '@/components/FCMInitializer'
 
 export const metadata: Metadata = {
@@ -19,8 +20,10 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <MembersProvider>
-            <FCMInitializer />
-            {children}
+            <EventsProvider>
+              <FCMInitializer />
+              {children}
+            </EventsProvider>
           </MembersProvider>
         </AuthProvider>
       </body>

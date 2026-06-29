@@ -99,11 +99,11 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-      <div className="w-full max-w-md rounded-t-2xl bg-white p-6 sm:rounded-2xl">
-        <h2 className="mb-4 text-lg font-bold text-gray-800">
+      <div className="w-full max-w-md rounded-t-2xl bg-white p-4 sm:p-6 sm:rounded-2xl max-h-[92vh] overflow-y-auto">
+        <h2 className="mb-3 text-base font-bold text-gray-800">
           {isEditMode ? '予定を編集' : '予定を追加'}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">タイトル</label>
             <div className="flex gap-2">
@@ -112,7 +112,7 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-blue-500 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                 placeholder="例: 学校の運動会"
               />
               <MicButton onResult={handleTitleVoice} disabled={saving} />
@@ -161,7 +161,7 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
                   type="button"
                   onClick={() => setMember(m.id)}
                   style={member === m.id ? { backgroundColor: memberColors[m.id], color: '#fff' } : {}}
-                  className={`rounded-lg py-2 text-sm font-medium transition ${
+                  className={`rounded-lg py-1.5 text-sm font-medium transition ${
                     member === m.id ? '' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -177,8 +177,8 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={2}
-                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                rows={1}
+                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
                 placeholder="詳細メモ..."
               />
               <div className="flex flex-col justify-start pt-0.5">
@@ -187,18 +187,18 @@ export default function EventModal({ initialDate, initialValues, onSave, onUpdat
             </div>
           </div>
 
-<div className="flex gap-2 pt-1">
+          <div className="flex gap-2 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg bg-gray-100 py-3 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              className="flex-1 rounded-lg bg-gray-100 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-blue-500 py-3 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
+              className="flex-1 rounded-lg bg-blue-500 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
             >
               {saving ? '保存中...' : isEditMode ? '更新' : '保存'}
             </button>
