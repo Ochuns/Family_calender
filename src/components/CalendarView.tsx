@@ -86,17 +86,21 @@ export default function CalendarView({ events, isAdmin, onDateSelect, onEventCli
   const renderEventContent = (info: EventContentArg) => {
     const original = info.event.extendedProps.original as CalendarEvent
     const label = memberLabels[original.member] ?? ''
+    const color = memberColors[original.member] ?? '#94a3b8'
     const initial = label.charAt(0)
+    const isAllDay = info.event.allDay
+
+    // 終日イベント：背景色ブロック上のバッジは半透明白
+    // 非終日イベント：背景色が適用されないためバッジにメンバーカラーを直接使用
+    const badgeStyle = isAllDay
+      ? { width: '15px', height: '15px', backgroundColor: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.5)', color: 'inherit' }
+      : { width: '15px', height: '15px', backgroundColor: color, color: '#fff' }
+
     return (
       <div className="flex items-center gap-0.5 overflow-hidden px-1">
         <span
           className="flex-shrink-0 inline-flex items-center justify-center rounded-full text-[9px] font-bold leading-none"
-          style={{
-            width: '15px',
-            height: '15px',
-            backgroundColor: 'rgba(255,255,255,0.25)',
-            border: '1px solid rgba(255,255,255,0.5)',
-          }}
+          style={badgeStyle}
         >
           {initial}
         </span>
