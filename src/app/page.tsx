@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useEvents } from '@/hooks/useEvents'
+import { useEventsContext } from '@/contexts/EventsContext'
 import CalendarView from '@/components/CalendarView'
 import EventModal from '@/components/EventModal'
 import EventDetailModal from '@/components/EventDetailModal'
 import { useMembers } from '@/contexts/MembersContext'
 import type { CalendarEvent } from '@/types/event'
-import type { NewEventInput } from '@/hooks/useEvents'
+import type { NewEventInput } from '@/contexts/EventsContext'
 
 export default function Home() {
   const { user, logout } = useAuth()
-  const { events, loading, addEvent, updateEvent, deleteEvent } = useEvents()
+  const { events, loading, addEvent, updateEvent, deleteEvent } = useEventsContext()
   const { members, memberColors, memberLabels } = useMembers()
   const isAdmin = !!user
   const isSuperAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
