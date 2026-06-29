@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
@@ -34,6 +34,7 @@ export default function MembersPage() {
   const [initializing, setInitializing] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const editsInitialized = useRef(false)
 
   useEffect(() => {
     if (!authLoading && role !== 'admin') {
@@ -42,17 +43,17 @@ export default function MembersPage() {
   }, [role, authLoading, router])
 
   useEffect(() => {
-    // Only initialize entries that don't exist yet — never overwrite pending edits
-    setEdits((prev) => {
-      const next = { ...prev }
-      members.forEach((m) => {
-        if (!next[m.id]) {
-          next[m.id] = { label: m.label, color: m.color }
-        }
-      })
-      return next
+    // Firestoreのロードが完了してから一度だけ初期化する
+    // loading中に初期化するとDEFAULT_MEMBERSで上書きされてしまうため
+    if (loading) return
+    if (editsInitialized.current) return
+    editsInitialized.current = true
+    const initial: Record<string, { label: string; color: string }> = {}
+    members.forEach((m) => {
+      initial[m.id] = { label: m.label, color: m.color }
     })
-  }, [members])
+    setEdits(initial)
+  }, [loading, members])
 
   const hasChanges = members.some((m) => {
     const edit = edits[m.id]
