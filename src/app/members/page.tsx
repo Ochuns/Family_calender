@@ -24,7 +24,8 @@ function EyeIcon({ open }: { open: boolean }) {
 }
 
 export default function MembersPage() {
-  const { role, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const isSuperAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
   const { members, loading, updateMember } = useMembers()
   const router = useRouter()
 
@@ -37,10 +38,10 @@ export default function MembersPage() {
   const editsInitialized = useRef(false)
 
   useEffect(() => {
-    if (!authLoading && role !== 'admin') {
+    if (!authLoading && !isSuperAdmin) {
       router.replace('/')
     }
-  }, [role, authLoading, router])
+  }, [isSuperAdmin, authLoading, router])
 
   useEffect(() => {
     // Firestoreのロードが完了してから一度だけ初期化する

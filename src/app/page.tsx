@@ -11,10 +11,11 @@ import type { CalendarEvent } from '@/types/event'
 import type { NewEventInput } from '@/hooks/useEvents'
 
 export default function Home() {
-  const { user, role, logout } = useAuth()
+  const { user, logout } = useAuth()
   const { events, loading, addEvent, updateEvent, deleteEvent } = useEvents()
   const { members, memberColors, memberLabels } = useMembers()
-  const isAdmin = role === 'admin'
+  const isAdmin = !!user
+  const isSuperAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | undefined>()
@@ -75,7 +76,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <h1 className="text-lg font-bold text-gray-800">家族カレンダー</h1>
           <div className="flex items-center gap-2">
-            {isAdmin && (
+            {isSuperAdmin && (
               <a
                 href="/members"
                 className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-200"
