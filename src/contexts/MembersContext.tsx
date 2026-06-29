@@ -9,6 +9,7 @@ import {
   writeBatch,
   query,
   orderBy,
+  getDocs,
 } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '@/lib/firebase'
@@ -45,17 +46,37 @@ export function MembersProvider({ children }: { children: ReactNode }) {
         const q = query(collection(db, 'members'), orderBy('order', 'asc'))
         unsubscribeSnapshot = onSnapshot(
           q,
-          (snapshot) => {
-            setInitialized(true)
-            if (!snapshot.empty) {
-              const data = snapshot.docs.map((d) => ({
-                id: d.id as FamilyMember,
-                ...(d.data() as Omit<MemberInfo, 'id'>),
-              }))
-              setFirestoreMembers(data)
-            } else {
-              setFirestoreMembers([])
+          async (snapshot) => {
+            if (snapshot.empty) {
+              // コレクションが空の場合、orderフィールドを含めてFirestoreに初期化
+              // 書き込み後にonSnapshotが再発火するため、setFirestoreMembersは不要
+              try {
+                const check = await getDocs(collection(db, 'members'))
+                if (check.empty) {
+                  const batch = writeBatch(db)
+                  DEFAULT_MEMBERS.forEach((m) => {
+                    batch.set(doc(db, 'members', m.id), {
+                      label: m.label,
+                      color: m.color,
+                      order: m.order,
+                      visible: true,
+                    })
+                  })
+                  await batch.commit()
+                }
+              } catch (e) {
+                console.error('Members auto-initialize failed:', e)
+                setInitialized(true)
+                setLoading(false)
+              }
+              return
             }
+            const data = snapshot.docs.map((d) => ({
+              id: d.id as FamilyMember,
+              ...(d.data() as Omit<MemberInfo, 'id'>),
+            }))
+            setFirestoreMembers(data)
+            setInitialized(true)
             setLoading(false)
           },
           (error) => {
