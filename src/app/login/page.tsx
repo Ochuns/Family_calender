@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, register } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: FormEvent) => {
@@ -17,10 +18,27 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
+      if (mode === 'login') {
+        await login(email, password)
+      } else {
+        if (password.length < 6) {
+          setError('パスワードは6文字以上で入力してください')
+          return
+        }
+        await register(email, password)
+      }
       router.push('/')
-    } catch {
-      setError('メールアドレスまたはパスワードが正しくありません')
+    } catch (err: unknown) {
+      if (mode === 'login') {
+        setError('メールアドレスまたはパスワードが正しくありません')
+      } else {
+        const code = (err as { code?: string }).code
+        if (code === 'auth/email-already-in-use') {
+          setError('このメールアドレスはすでに登録されています')
+        } else {
+          setError('登録に失敗しました。もう一度お試しください')
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -32,9 +50,30 @@ export default function LoginPage() {
         <h1 className="mb-2 text-center text-2xl font-bold text-gray-800">
           家族カレンダー
         </h1>
-        <p className="mb-8 text-center text-sm text-gray-500">
-          ログインして予定を確認しましょう
+        <p className="mb-6 text-center text-sm text-gray-500">
+          {mode === 'login' ? 'ログインして予定を確認しましょう' : 'アカウントを作成してください'}
         </p>
+
+        <div className="mb-6 flex rounded-lg bg-gray-100 p-1">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setError('') }}
+            className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
+              mode === 'login' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
+            }`}
+          >
+            ログイン
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode('register'); setError('') }}
+            className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
+              mode === 'register' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500'
+            }`}
+          >
+            新規登録
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -53,7 +92,7 @@ export default function LoginPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              パスワード
+              パスワード{mode === 'register' && <span className="text-xs text-gray-400 ml-1">（6文字以上）</span>}
             </label>
             <input
               type="password"
@@ -76,7 +115,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-lg bg-blue-500 py-3 text-base font-semibold text-white transition hover:bg-blue-600 disabled:opacity-50"
           >
-            {loading ? 'ログイン中...' : 'ログイン'}
+            {loading ? '処理中...' : mode === 'login' ? 'ログイン' : '登録して始める'}
           </button>
         </form>
       </div>

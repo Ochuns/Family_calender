@@ -5,6 +5,7 @@ import {
   User,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
 } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
@@ -16,6 +17,7 @@ interface AuthContextType {
   role: Role | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -30,8 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
       if (firebaseUser) {
-        const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL
-        setRole(firebaseUser.email === adminEmail ? 'admin' : 'viewer')
+        setRole('admin')
         document.cookie = `session=true; path=/; max-age=${60 * 60 * 24 * 7}`
       } else {
         setRole(null)
@@ -47,13 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
+  const register = async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(auth, email, password)
+  }
+
   const logout = async () => {
     await signOut(auth)
     window.location.href = '/login'
   }
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, role, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )
