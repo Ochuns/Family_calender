@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -43,6 +43,18 @@ export default function CalendarView({ events, isAdmin, onDateSelect, onEventCli
   const calendarRef = useRef<FullCalendar>(null)
   const [currentView, setCurrentView] = useState<ViewType>('dayGridMonth')
   const { memberColors, memberLabels } = useMembers()
+
+  // memberColorsが更新されたとき（Firestoreロード後など）にFullCalendarの色を強制更新
+  useEffect(() => {
+    const api = calendarRef.current?.getApi()
+    if (!api) return
+    api.getEvents().forEach((event) => {
+      const original = event.extendedProps.original as CalendarEvent
+      const color = memberColors[original.member] ?? '#94a3b8'
+      event.setProp('backgroundColor', color)
+      event.setProp('borderColor', color)
+    })
+  }, [memberColors])
 
   const fcEvents = events.map((e) => ({
     id: e.id,
