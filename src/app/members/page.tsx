@@ -25,13 +25,13 @@ function EyeIcon({ open }: { open: boolean }) {
 
 export default function MembersPage() {
   const { role, loading: authLoading } = useAuth()
-  const { members, loading, updateMember, initializeMembers } = useMembers()
+  const { members, loading, updateMember } = useMembers()
   const router = useRouter()
 
   const [edits, setEdits] = useState<Record<string, { label: string; color: string }>>({})
   const [saving, setSaving] = useState(false)
   const [togglingId, setTogglingId] = useState<string | null>(null)
-  const [initializing, setInitializing] = useState(false)
+
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const editsInitialized = useRef(false)
@@ -95,20 +95,7 @@ export default function MembersPage() {
     }
   }
 
-  const handleInitialize = async () => {
-    setInitializing(true)
-    setSaveError(null)
-    try {
-      await initializeMembers()
-    } catch (error) {
-      console.error('初期化エラー:', error)
-      setSaveError('初期化に失敗しました。Firestoreのセキュリティルールを確認してください。')
-    } finally {
-      setInitializing(false)
-    }
-  }
-
-  if (authLoading || loading) {
+if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-gray-400">
         読み込み中...
@@ -215,18 +202,6 @@ export default function MembersPage() {
             </button>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <p className="mb-2 text-xs text-gray-400">
-              Firestoreにメンバーデータを初期化します（変更した内容はリセットされます）
-            </p>
-            <button
-              onClick={handleInitialize}
-              disabled={initializing}
-              className="w-full rounded-xl border border-gray-300 py-3 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-40"
-            >
-              {initializing ? '初期化中...' : 'デフォルトに戻す'}
-            </button>
-          </div>
         </div>
       </main>
     </div>
