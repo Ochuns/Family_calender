@@ -10,7 +10,8 @@ import {
   query,
   orderBy,
 } from 'firebase/firestore'
-import { db } from '@/lib/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { db, auth } from '@/lib/firebase'
 import { DEFAULT_MEMBERS } from '@/types/event'
 import type { FamilyMember, MemberInfo } from '@/types/event'
 
@@ -32,29 +33,48 @@ export function MembersProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const q = query(collection(db, 'members'), orderBy('order', 'asc'))
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        setInitialized(true)
-        if (!snapshot.empty) {
-          const data = snapshot.docs.map((d) => ({
-            id: d.id as FamilyMember,
-            ...(d.data() as Omit<MemberInfo, 'id'>),
-          }))
-          setFirestoreMembers(data)
-        } else {
-          setFirestoreMembers([])
-        }
-        setLoading(false)
-      },
-      (error) => {
-        console.error('Members Firestore error:', error)
+    let unsubscribeSnapshot: (() => void) | null = null
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot()
+        unsubscribeSnapshot = null
+      }
+
+      if (user) {
+        const q = query(collection(db, 'members'), orderBy('order', 'asc'))
+        unsubscribeSnapshot = onSnapshot(
+          q,
+          (snapshot) => {
+            setInitialized(true)
+            if (!snapshot.empty) {
+              const data = snapshot.docs.map((d) => ({
+                id: d.id as FamilyMember,
+                ...(d.data() as Omit<MemberInfo, 'id'>),
+              }))
+              setFirestoreMembers(data)
+            } else {
+              setFirestoreMembers([])
+            }
+            setLoading(false)
+          },
+          (error) => {
+            console.error('Members Firestore error:', error)
+            setInitialized(true)
+            setLoading(false)
+          }
+        )
+      } else {
+        setFirestoreMembers([])
         setInitialized(true)
         setLoading(false)
       }
-    )
-    return () => unsubscribe()
+    })
+
+    return () => {
+      unsubscribeAuth()
+      if (unsubscribeSnapshot) unsubscribeSnapshot()
+    }
   }, [])
 
   const members = firestoreMembers.length > 0 ? firestoreMembers : DEFAULT_MEMBERS
